@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getColor } from "./ColorPicker";
-import { useAtom } from "jotai";
+import { atom, useAtom } from "jotai";
 import { activeColorPickerSectionAtom } from "./colorPickerUtils";
+import { eyeDropperIcon } from "../icons";
+import { EyeDropper } from "../EyeDropper";
+import { jotaiScope } from "../../jotai";
 import { KEYS } from "../../keys";
 
 interface ColorInputProps {
@@ -9,6 +12,9 @@ interface ColorInputProps {
   onChange: (color: string) => void;
   label: string;
 }
+
+/** null indicates closed eyeDropper */
+export const eyeDropperStateAtom = atom<null | { keepOpen: boolean }>(null);
 
 export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
   const [innerValue, setInnerValue] = useState(color);
@@ -34,7 +40,7 @@ export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
   );
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const divRef = useRef<HTMLDivElement>(null);
+  const eyeDropperTriggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -42,8 +48,19 @@ export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
     }
   }, [activeSection]);
 
+  const [eyeDropperState, setEyeDropperState] = useAtom(
+    eyeDropperStateAtom,
+    jotaiScope,
+  );
+
+  useEffect(() => {
+    return () => {
+      setEyeDropperState(null);
+    };
+  }, [setEyeDropperState]);
+
   return (
-    <label className="color-picker__input-label">
+    <div className="color-picker__input-label">
       <div className="color-picker__input-hash">#</div>
       <input
         ref={activeSection === "hex" ? inputRef : undefined}
@@ -60,16 +77,55 @@ export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
         }}
         tabIndex={-1}
         onFocus={() => setActiveColorPickerSection("hex")}
-        onKeyDown={(e) => {
-          if (e.key === KEYS.TAB) {
+        onKeyDown={(event) => {
+          if (event.key === KEYS.TAB) {
             return;
+          } else if (event.key === KEYS.ESCAPE) {
+            // eyeDropperTriggerRef.current?.focus();
           }
-          if (e.key === KEYS.ESCAPE) {
-            divRef.current?.focus();
+          event.stopPropagation();
+        }}
+        onKeyUp={(event) => {
+          if (event.key === KEYS.ESCAPE) {
+            // event.preventDefault();
+            // event.stopPropagation();
           }
-          e.stopPropagation();
         }}
       />
-    </label>
+      <div
+        style={{
+          width: "1px",
+          height: "1.25rem",
+          backgroundColor: "var(--default-border-color)",
+        }}
+      />
+      {eyeDropperState && (
+        <EyeDropper
+          onCancel={() => {
+            setEyeDropperState(null);
+          }}
+          onSelect={(color, event) => {
+            setEyeDropperState((s) => (s?.keepOpen && event.altKey ? s : null));
+            changeColor(color);
+          }}
+        />
+      )}
+      <div
+        style={{
+          width: "1.2em",
+          height: "1.2em",
+          color: eyeDropperState ? "var(--color-primary)" : undefined,
+          fill: eyeDropperState ? "var(--color-primary)" : undefined,
+          cursor: "pointer",
+        }}
+        ref={eyeDropperTriggerRef}
+        className="excalidraw-eye-dropper-trigger"
+        onClick={() =>
+          setEyeDropperState((s) => (s ? null : { keepOpen: false }))
+        }
+      >
+        {eyeDropperIcon}
+      </div>
+    </div>
   );
 };

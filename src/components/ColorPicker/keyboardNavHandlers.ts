@@ -1,3 +1,4 @@
+import { KEYS } from "../../keys";
 import {
   ColorPickerColor,
   ColorPalette,
@@ -5,7 +6,6 @@ import {
   COLORS_PER_ROW,
   COLOR_PALETTE,
 } from "../../colors";
-import { KEYS } from "../../keys";
 import { ValueOf } from "../../utility-types";
 import {
   ActiveColorPickerSectionAtomType,
@@ -97,7 +97,7 @@ const hotkeyHandler = ({
 };
 
 interface ColorPickerKeyNavHandlerProps {
-  e: React.KeyboardEvent;
+  event: React.KeyboardEvent;
   activeColorPickerSection: ActiveColorPickerSectionAtomType;
   palette: ColorPaletteCustom;
   hex: string | null;
@@ -108,10 +108,12 @@ interface ColorPickerKeyNavHandlerProps {
   ) => void;
   updateData: (formData?: any) => void;
   activeShade: number;
+  onEyeDropperToggle: () => void;
+  onEscape: (event: React.KeyboardEvent | KeyboardEvent) => void;
 }
 
 export const colorPickerKeyNavHandler = ({
-  e,
+  event,
   activeColorPickerSection,
   palette,
   hex,
@@ -120,15 +122,26 @@ export const colorPickerKeyNavHandler = ({
   setActiveColorPickerSection,
   updateData,
   activeShade,
+  onEyeDropperToggle,
+  onEscape,
 }: ColorPickerKeyNavHandlerProps) => {
-  if (e.key === KEYS.ESCAPE || !hex) {
+  if (event.key === KEYS.ESCAPE) {
+    onEscape(event);
+    return;
+  }
+
+  if (!hex) {
     updateData({ openPopup: null });
     return;
   }
 
+  if (event.key === KEYS.I) {
+    onEyeDropperToggle();
+  }
+
   const colorObj = getColorNameAndShadeFromHex({ hex, palette });
 
-  if (e.key === KEYS.TAB) {
+  if (event.key === KEYS.TAB) {
     const sectionsMap: Record<
       NonNullable<ActiveColorPickerSectionAtomType>,
       boolean
@@ -147,7 +160,7 @@ export const colorPickerKeyNavHandler = ({
     }, [] as ActiveColorPickerSectionAtomType[]);
 
     const activeSectionIndex = sections.indexOf(activeColorPickerSection);
-    const indexOffset = e.shiftKey ? -1 : 1;
+    const indexOffset = event.shiftKey ? -1 : 1;
     const nextSectionIndex =
       activeSectionIndex + indexOffset > sections.length - 1
         ? 0
@@ -180,14 +193,14 @@ export const colorPickerKeyNavHandler = ({
       }
     }
 
-    e.preventDefault();
-    e.stopPropagation();
+    event.preventDefault();
+    event.stopPropagation();
 
     return;
   }
 
   hotkeyHandler({
-    e,
+    e: event,
     colorObj,
     onChange,
     palette,
@@ -199,7 +212,7 @@ export const colorPickerKeyNavHandler = ({
   if (activeColorPickerSection === "shades") {
     if (colorObj) {
       const { shade } = colorObj;
-      const newShade = arrowHandler(e.key, shade, COLORS_PER_ROW);
+      const newShade = arrowHandler(event.key, shade, COLORS_PER_ROW);
 
       if (newShade !== undefined) {
         onChange(palette[colorObj.colorName][newShade]);
@@ -214,7 +227,7 @@ export const colorPickerKeyNavHandler = ({
       const indexOfColorName = colorNames.indexOf(colorName);
 
       const newColorIndex = arrowHandler(
-        e.key,
+        event.key,
         indexOfColorName,
         colorNames.length,
       );
@@ -236,7 +249,7 @@ export const colorPickerKeyNavHandler = ({
     const indexOfColor = customColors.indexOf(hex);
 
     const newColorIndex = arrowHandler(
-      e.key,
+      event.key,
       indexOfColor,
       customColors.length,
     );

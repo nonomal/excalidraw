@@ -21,6 +21,7 @@ import {
   DEFAULT_ELEMENT_BACKGROUND_COLOR_INDEX,
   DEFAULT_ELEMENT_STROKE_COLOR_INDEX,
 } from "../../colors";
+import { KEYS } from "../../keys";
 
 interface PickerProps {
   color: string | null;
@@ -31,6 +32,8 @@ interface PickerProps {
   palette: ColorPaletteCustom;
   updateData: (formData?: any) => void;
   children?: React.ReactNode;
+  onEyeDropperToggle: (force?: boolean) => void;
+  onEscape: (event: React.KeyboardEvent | KeyboardEvent) => void;
 }
 
 export const Picker = ({
@@ -42,6 +45,8 @@ export const Picker = ({
   palette,
   updateData,
   children,
+  onEyeDropperToggle,
+  onEscape,
 }: PickerProps) => {
   const [customColors] = React.useState(() => {
     if (type === "canvasBackground") {
@@ -95,25 +100,49 @@ export const Picker = ({
     if (colorObj?.shade != null) {
       setActiveShade(colorObj.shade);
     }
-  }, [colorObj]);
+
+    const keyup = (event: KeyboardEvent) => {
+      if (event.key === KEYS.ALT) {
+        onEyeDropperToggle(false);
+      }
+      if (event.key === KEYS.ESCAPE) {
+        onEscape(event);
+      }
+    };
+    document.addEventListener("keyup", keyup, { capture: true });
+    return () => {
+      document.removeEventListener("keyup", keyup, { capture: true });
+    };
+  }, [colorObj, onEyeDropperToggle, onEscape]);
+
+  const pickerRef = React.useRef<HTMLDivElement>(null);
 
   return (
     <div role="dialog" aria-modal="true" aria-label={t("labels.colorPicker")}>
       <div
-        onKeyDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
+        ref={pickerRef}
+        onKeyDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
 
+          if (event.key === KEYS.ALT) {
+            onEyeDropperToggle(true);
+            return;
+          }
+
+          // if (e.alt && e)
           colorPickerKeyNavHandler({
-            e,
+            event,
             activeColorPickerSection,
             palette,
             hex: color,
             onChange,
+            onEyeDropperToggle,
             customColors,
             setActiveColorPickerSection,
             updateData,
             activeShade,
+            onEscape,
           });
         }}
         className="color-picker-content"

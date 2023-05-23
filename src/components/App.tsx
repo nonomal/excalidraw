@@ -324,6 +324,10 @@ export const ExcalidrawContainerContext = React.createContext<{
 }>({ container: null, id: null });
 ExcalidrawContainerContext.displayName = "ExcalidrawContainerContext";
 
+export const ExcalidrawCanvasContext =
+  React.createContext<HTMLCanvasElement | null>(null);
+ExcalidrawContainerContext.displayName = "ExcalidrawCanvasContext";
+
 const ExcalidrawElementsContext = React.createContext<
   readonly NonDeletedExcalidrawElement[]
 >([]);
@@ -355,6 +359,7 @@ export const useAppProps = () => useContext(AppPropsContext);
 export const useDevice = () => useContext<Device>(DeviceContext);
 export const useExcalidrawContainer = () =>
   useContext(ExcalidrawContainerContext);
+export const useExcalidrawCanvas = () => useContext(ExcalidrawCanvasContext);
 export const useExcalidrawElements = () =>
   useContext(ExcalidrawElementsContext);
 export const useExcalidrawAppState = () =>
@@ -590,84 +595,89 @@ class App extends React.Component<AppProps, AppState> {
         }
       >
         <AppContext.Provider value={this}>
-          <AppPropsContext.Provider value={this.props}>
-            <ExcalidrawContainerContext.Provider
-              value={this.excalidrawContainerValue}
-            >
-              <DeviceContext.Provider value={this.device}>
-                <ExcalidrawSetAppStateContext.Provider value={this.setAppState}>
-                  <ExcalidrawAppStateContext.Provider value={this.state}>
-                    <ExcalidrawElementsContext.Provider
-                      value={this.scene.getNonDeletedElements()}
-                    >
-                      <ExcalidrawActionManagerContext.Provider
-                        value={this.actionManager}
+          <ExcalidrawCanvasContext.Provider value={this.canvas}>
+            <AppPropsContext.Provider value={this.props}>
+              <ExcalidrawContainerContext.Provider
+                value={this.excalidrawContainerValue}
+              >
+                <DeviceContext.Provider value={this.device}>
+                  <ExcalidrawSetAppStateContext.Provider
+                    value={this.setAppState}
+                  >
+                    <ExcalidrawAppStateContext.Provider value={this.state}>
+                      <ExcalidrawElementsContext.Provider
+                        value={this.scene.getNonDeletedElements()}
                       >
-                        <LayerUI
-                          canvas={this.canvas}
-                          appState={this.state}
-                          files={this.files}
-                          setAppState={this.setAppState}
-                          actionManager={this.actionManager}
-                          elements={this.scene.getNonDeletedElements()}
-                          onLockToggle={this.toggleLock}
-                          onPenModeToggle={this.togglePenMode}
-                          onHandToolToggle={this.onHandToolToggle}
-                          langCode={getLanguage().code}
-                          renderTopRightUI={renderTopRightUI}
-                          renderCustomStats={renderCustomStats}
-                          showExitZenModeBtn={
-                            typeof this.props?.zenModeEnabled === "undefined" &&
-                            this.state.zenModeEnabled
-                          }
-                          UIOptions={this.props.UIOptions}
-                          onImageAction={this.onImageAction}
-                          onExportImage={this.onExportImage}
-                          renderWelcomeScreen={
-                            !this.state.isLoading &&
-                            this.state.showWelcomeScreen &&
-                            this.state.activeTool.type === "selection" &&
-                            !this.scene.getElementsIncludingDeleted().length
-                          }
+                        <ExcalidrawActionManagerContext.Provider
+                          value={this.actionManager}
                         >
-                          {this.props.children}
-                        </LayerUI>
-                        <div className="excalidraw-textEditorContainer" />
-                        <div className="excalidraw-contextMenuContainer" />
-                        {selectedElement.length === 1 &&
-                          !this.state.contextMenu &&
-                          this.state.showHyperlinkPopup && (
-                            <Hyperlink
-                              key={selectedElement[0].id}
-                              element={selectedElement[0]}
-                              setAppState={this.setAppState}
-                              onLinkOpen={this.props.onLinkOpen}
+                          <LayerUI
+                            canvas={this.canvas}
+                            appState={this.state}
+                            files={this.files}
+                            setAppState={this.setAppState}
+                            actionManager={this.actionManager}
+                            elements={this.scene.getNonDeletedElements()}
+                            onLockToggle={this.toggleLock}
+                            onPenModeToggle={this.togglePenMode}
+                            onHandToolToggle={this.onHandToolToggle}
+                            langCode={getLanguage().code}
+                            renderTopRightUI={renderTopRightUI}
+                            renderCustomStats={renderCustomStats}
+                            showExitZenModeBtn={
+                              typeof this.props?.zenModeEnabled ===
+                                "undefined" && this.state.zenModeEnabled
+                            }
+                            UIOptions={this.props.UIOptions}
+                            onImageAction={this.onImageAction}
+                            onExportImage={this.onExportImage}
+                            renderWelcomeScreen={
+                              !this.state.isLoading &&
+                              this.state.showWelcomeScreen &&
+                              this.state.activeTool.type === "selection" &&
+                              !this.scene.getElementsIncludingDeleted().length
+                            }
+                          >
+                            {this.props.children}
+                          </LayerUI>
+                          <div className="excalidraw-textEditorContainer" />
+                          <div className="excalidraw-contextMenuContainer" />
+                          <div className="excalidraw-eye-dropper-container" />
+                          {selectedElement.length === 1 &&
+                            !this.state.contextMenu &&
+                            this.state.showHyperlinkPopup && (
+                              <Hyperlink
+                                key={selectedElement[0].id}
+                                element={selectedElement[0]}
+                                setAppState={this.setAppState}
+                                onLinkOpen={this.props.onLinkOpen}
+                              />
+                            )}
+                          {this.state.toast !== null && (
+                            <Toast
+                              message={this.state.toast.message}
+                              onClose={() => this.setToast(null)}
+                              duration={this.state.toast.duration}
+                              closable={this.state.toast.closable}
                             />
                           )}
-                        {this.state.toast !== null && (
-                          <Toast
-                            message={this.state.toast.message}
-                            onClose={() => this.setToast(null)}
-                            duration={this.state.toast.duration}
-                            closable={this.state.toast.closable}
-                          />
-                        )}
-                        {this.state.contextMenu && (
-                          <ContextMenu
-                            items={this.state.contextMenu.items}
-                            top={this.state.contextMenu.top}
-                            left={this.state.contextMenu.left}
-                            actionManager={this.actionManager}
-                          />
-                        )}
-                        <main>{this.renderCanvas()}</main>
-                      </ExcalidrawActionManagerContext.Provider>
-                    </ExcalidrawElementsContext.Provider>
-                  </ExcalidrawAppStateContext.Provider>
-                </ExcalidrawSetAppStateContext.Provider>
-              </DeviceContext.Provider>
-            </ExcalidrawContainerContext.Provider>
-          </AppPropsContext.Provider>
+                          {this.state.contextMenu && (
+                            <ContextMenu
+                              items={this.state.contextMenu.items}
+                              top={this.state.contextMenu.top}
+                              left={this.state.contextMenu.left}
+                              actionManager={this.actionManager}
+                            />
+                          )}
+                          <main>{this.renderCanvas()}</main>
+                        </ExcalidrawActionManagerContext.Provider>
+                      </ExcalidrawElementsContext.Provider>
+                    </ExcalidrawAppStateContext.Provider>
+                  </ExcalidrawSetAppStateContext.Provider>
+                </DeviceContext.Provider>
+              </ExcalidrawContainerContext.Provider>
+            </AppPropsContext.Provider>
+          </ExcalidrawCanvasContext.Provider>
         </AppContext.Provider>
       </div>
     );

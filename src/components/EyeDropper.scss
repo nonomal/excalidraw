@@ -1,0 +1,24 @@
+.excalidraw {
+  .excalidraw-eye-dropper-container,
+  .excalidraw-eye-dropper-backdrop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+  .excalidraw-eye-dropper-container {
+    pointer-events: none;
+  }
+  .excalidraw-eye-dropper-backdrop {
+    pointer-events: all;
+  }
+  .excalidraw-eye-dropper-preview {
+    pointer-events: none;
+    width: 50px;
+    height: 50px;
+    position: fixed;
+    z-index: 999999;
+    border-radius: 1em;
+    border: 1px solid #aaa;
+  }
+}
