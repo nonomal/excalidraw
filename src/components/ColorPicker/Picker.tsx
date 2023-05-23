@@ -22,6 +22,7 @@ import {
   DEFAULT_ELEMENT_STROKE_COLOR_INDEX,
 } from "../../colors";
 import { KEYS } from "../../keys";
+import { isWritableElement } from "../../utils";
 
 interface PickerProps {
   color: string | null;
@@ -101,19 +102,27 @@ export const Picker = ({
       setActiveShade(colorObj.shade);
     }
 
+    const keydown = (e: KeyboardEvent) => {
+      if (e.key === KEYS.ALT) {
+        console.log("~~~~ KEYDOWN", e.key);
+      }
+    };
     const keyup = (event: KeyboardEvent) => {
       if (event.key === KEYS.ALT) {
+        console.log("~~~~ KEYUP", event.key);
         onEyeDropperToggle(false);
       }
       if (event.key === KEYS.ESCAPE) {
         onEscape(event);
       }
     };
+    // document.addEventListener("keydown", keydown, { capture: true });
     document.addEventListener("keyup", keyup, { capture: true });
     return () => {
+      // document.removeEventListener("keydown", keydown, { capture: true });
       document.removeEventListener("keyup", keyup, { capture: true });
     };
-  }, [colorObj, onEyeDropperToggle, onEscape]);
+  }, [colorObj, onEyeDropperToggle]);
 
   const pickerRef = React.useRef<HTMLDivElement>(null);
 
@@ -144,6 +153,12 @@ export const Picker = ({
             activeShade,
             onEscape,
           });
+        }}
+        onKeyUp={(event) => {
+          if (event.key === KEYS.ALT) {
+            // onEyeDropperToggle(false);
+            return;
+          }
         }}
         className="color-picker-content"
         // to allow focusing by clicking but not by tabbing

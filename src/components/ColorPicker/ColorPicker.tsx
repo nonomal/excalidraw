@@ -16,7 +16,7 @@ import { t } from "../../i18n";
 import clsx from "clsx";
 import { jotaiScope } from "../../jotai";
 import { eyeDropperStateAtom, ColorInput } from "./ColorInput";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import "./ColorPicker.scss";
 
@@ -78,6 +78,7 @@ const ColorPickerPopupContent = ({
     eyeDropperStateAtom,
     jotaiScope,
   );
+  console.log({ isEyeDropping: eyeDropperState });
 
   const { container } = useExcalidrawContainer();
   const { isMobile, isLandscape } = useDevice();
@@ -96,6 +97,24 @@ const ColorPickerPopupContent = ({
   );
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    let lastActiveElement: HTMLElement | null = null;
+    const handler = () => {
+      if (lastActiveElement !== document.activeElement) {
+        console.log(
+          "%cACTIVE ELEMENT CHANGED",
+          "color: red",
+          document.activeElement,
+        );
+      }
+      lastActiveElement = document.activeElement as HTMLElement;
+    };
+    const id = setInterval(handler, 100);
+    return () => {
+      clearInterval(id);
+    };
+  }, []);
+
   return (
     <Popover.Portal container={container}>
       <Popover.Content
@@ -105,12 +124,12 @@ const ColorPickerPopupContent = ({
         onFocusOutside={(event) => {
           // console.log(">>>>>>>>>>>>>>>>>>>>>>>", popoverRef.current);
 
-          // console.log(
-          //   "FOCUS OUTSIDE",
-          //   eyeDropperState,
-          //   event.target,
-          //   event.currentTarget,
-          // );
+          console.log(
+            "FOCUS OUTSIDE",
+            eyeDropperState,
+            event.target,
+            event.currentTarget,
+          );
           // if (eyeDropperState) {
           // popoverRef.current?.focus();
           (
@@ -120,6 +139,7 @@ const ColorPickerPopupContent = ({
           event.preventDefault();
         }}
         onPointerDownOutside={(event) => {
+          console.log("pointerdown colorpicker", eyeDropperState);
           if (eyeDropperState) {
             // prevent from closing if we click outside the popover
             // while eyedropping (e.g. click when clicking the sidebar;
@@ -169,6 +189,7 @@ const ColorPickerPopupContent = ({
               onChange(changedColor);
             }}
             onEyeDropperToggle={(force) => {
+              console.log("~~~~~~~~~~~~~~~~~~~~~");
               // console.log("ON EYER DROPPER TOGGLE", force);
               setEyeDropperState((s) => {
                 const next =
@@ -192,6 +213,7 @@ const ColorPickerPopupContent = ({
               if (eyeDropperState) {
                 setEyeDropperState(null);
               } else if (isWritableElement(event.target)) {
+                console.log(">>", popoverRef.current);
                 (
                   popoverRef.current?.querySelector(
                     ".color-picker-content",
