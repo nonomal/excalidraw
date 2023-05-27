@@ -75,7 +75,12 @@ export const EyeDropper = ({
       colorDiv.style.top = `${clientY + padding}px`;
       colorDiv.style.left = `${clientX + padding}px`;
 
-      const pixel = ctx.getImageData(clientX, clientY, 1, 1).data;
+      const pixel = ctx.getImageData(
+        clientX * window.devicePixelRatio,
+        clientY * window.devicePixelRatio,
+        1,
+        1,
+      ).data;
       currentColor = rgbToHex(pixel[0], pixel[1], pixel[2]);
 
       colorDiv.style.background = currentColor;
