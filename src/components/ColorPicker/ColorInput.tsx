@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getColor } from "./ColorPicker";
-import { atom, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { activeColorPickerSectionAtom } from "./colorPickerUtils";
 import { eyeDropperIcon } from "../icons";
-import { EyeDropper } from "../EyeDropper";
 import { jotaiScope } from "../../jotai";
 import { KEYS } from "../../keys";
+import { eyeDropperStateAtom } from "../EyeDropper";
 
 interface ColorInputProps {
   color: string | null;
   onChange: (color: string) => void;
   label: string;
 }
-
-/** null indicates closed eyeDropper */
-export const eyeDropperStateAtom = atom<null | { keepOpen: boolean }>(null);
 
 export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
   const [innerValue, setInnerValue] = useState(color);
@@ -99,17 +96,6 @@ export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
           backgroundColor: "var(--default-border-color)",
         }}
       />
-      {eyeDropperState && (
-        <EyeDropper
-          onCancel={() => {
-            setEyeDropperState(null);
-          }}
-          onSelect={(color, event) => {
-            setEyeDropperState((s) => (s?.keepOpen && event.altKey ? s : null));
-            changeColor(color);
-          }}
-        />
-      )}
       <div
         style={{
           width: "1.2em",
@@ -121,7 +107,11 @@ export const ColorInput = ({ color, onChange, label }: ColorInputProps) => {
         ref={eyeDropperTriggerRef}
         className="excalidraw-eye-dropper-trigger"
         onClick={() =>
-          setEyeDropperState((s) => (s ? null : { keepOpen: false }))
+          setEyeDropperState((s) =>
+            s
+              ? null
+              : { keepOpen: false, onSelect: (color) => onChange(color) },
+          )
         }
       >
         {eyeDropperIcon}

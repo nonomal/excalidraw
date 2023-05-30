@@ -12,6 +12,8 @@ interface Document {
 }
 
 interface Window {
+  __EXCALIDRAW_CLIENT_X__?: number;
+  __EXCALIDRAW_CLIENT_Y__?: number;
   ClipboardItem: any;
   __EXCALIDRAW_SHA__: string | undefined;
   EXCALIDRAW_ASSET_PATH: string | undefined;

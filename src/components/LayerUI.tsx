@@ -38,7 +38,7 @@ import { actionToggleStats } from "../actions/actionToggleStats";
 import Footer from "./footer/Footer";
 import { isSidebarDockedAtom } from "./Sidebar/Sidebar";
 import { jotaiScope } from "../jotai";
-import { Provider, useAtomValue } from "jotai";
+import { Provider, useAtom, useAtomValue } from "jotai";
 import MainMenu from "./main-menu/MainMenu";
 import { ActiveConfirmDialog } from "./ActiveConfirmDialog";
 import { HandButton } from "./HandButton";
@@ -50,6 +50,7 @@ import { DefaultSidebar } from "./DefaultSidebar";
 
 import "./LayerUI.scss";
 import "./Toolbar.scss";
+import { EyeDropper, eyeDropperStateAtom } from "./EyeDropper";
 
 interface LayerUIProps {
   actionManager: ActionManager;
@@ -119,6 +120,11 @@ const LayerUI = ({
 }: LayerUIProps) => {
   const device = useDevice();
   const tunnels = useInitializeTunnels();
+
+  const [eyeDropperState, setEyeDropperState] = useAtom(
+    eyeDropperStateAtom,
+    jotaiScope,
+  );
 
   const renderJSONExportDialog = () => {
     if (!UIOptions.canvasActions.export) {
@@ -349,6 +355,17 @@ const LayerUI = ({
         <ErrorDialog onClose={() => setAppState({ errorMessage: null })}>
           {appState.errorMessage}
         </ErrorDialog>
+      )}
+      {eyeDropperState && (
+        <EyeDropper
+          onCancel={() => {
+            setEyeDropperState(null);
+          }}
+          onSelect={(color, event) => {
+            setEyeDropperState((s) => (s?.keepOpen && event.altKey ? s : null));
+            eyeDropperState?.onSelect?.(color);
+          }}
+        />
       )}
       {appState.openDialog === "help" && (
         <HelpDialog

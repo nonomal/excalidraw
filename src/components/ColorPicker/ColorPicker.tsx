@@ -15,8 +15,9 @@ import PickerHeading from "./PickerHeading";
 import { t } from "../../i18n";
 import clsx from "clsx";
 import { jotaiScope } from "../../jotai";
-import { eyeDropperStateAtom, ColorInput } from "./ColorInput";
+import { ColorInput } from "./ColorInput";
 import { useEffect, useRef } from "react";
+import { eyeDropperStateAtom } from "../EyeDropper";
 
 import "./ColorPicker.scss";
 
@@ -197,11 +198,19 @@ const ColorPickerPopupContent = ({
                     ? force
                       ? s && s.keepOpen
                         ? s
-                        : { keepOpen: true }
+                        : {
+                            keepOpen: true,
+                            onSelect: (color: string) => onChange(color),
+                          }
                       : null
                     : s
                     ? null
-                    : { keepOpen: false };
+                    : {
+                        keepOpen: false,
+                        onSelect: (color: string) => {
+                          onChange(color);
+                        },
+                      };
 
                 // console.log(force, { next }, next === s);
 

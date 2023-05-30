@@ -2092,8 +2092,8 @@ class App extends React.Component<AppProps, AppState> {
 
   private updateCurrentCursorPosition = withBatchedUpdates(
     (event: MouseEvent) => {
-      cursorX = event.clientX;
-      cursorY = event.clientY;
+      window.__EXCALIDRAW_CLIENT_X__ = cursorX = event.clientX;
+      window.__EXCALIDRAW_CLIENT_Y__ = cursorY = event.clientY;
     },
   );
 

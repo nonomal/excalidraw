@@ -1,12 +1,26 @@
+import { atom } from "jotai";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useUIAppState } from "../context/ui-appState";
+import { mutateElement } from "../element/mutateElement";
 import { useOutsideClick } from "../hooks/useOutsideClick";
-import { KEYS } from "../keys";
-import { isInputLike, isInteractive } from "../utils";
-import { useExcalidrawCanvas, useExcalidrawContainer } from "./App";
-// import { useDevice } from "./App";
+import { invalidateShapeForElement } from "../renderer/renderElement";
+import { getSelectedElements } from "../scene";
+import Scene from "../scene/Scene";
+import { isInteractive } from "../utils";
+import {
+  useExcalidrawCanvas,
+  useExcalidrawContainer,
+  useExcalidrawElements,
+} from "./App";
 
 import "./EyeDropper.scss";
+
+/** null indicates closed eyeDropper */
+export const eyeDropperStateAtom = atom<null | {
+  keepOpen: boolean;
+  onSelect?: (color: string) => void;
+}>(null);
 
 const padding = 20;
 
@@ -57,6 +71,12 @@ export const EyeDropper = ({
 }) => {
   const canvas = useExcalidrawCanvas();
   const bodyRoot = useBodyRoot();
+  const appState = useUIAppState();
+  const elements = useExcalidrawElements();
+
+  const selectedElements = getSelectedElements(elements, appState);
+  const selectedElementsRef = useRef(selectedElements);
+  selectedElementsRef.current = selectedElements;
 
   useEffect(() => {
     const colorDiv = ref.current;
@@ -70,8 +90,16 @@ export const EyeDropper = ({
 
     const ctx = canvas.getContext("2d")!;
 
-    const mouseMoveListener = (event: MouseEvent) => {
-      const { clientX, clientY } = event;
+    let isHoldingPointerDown = false;
+
+    const mouseMoveListener = ({
+      clientX,
+      clientY,
+    }: {
+      clientX: number;
+      clientY: number;
+    }) => {
+      console.log("MOVE");
       colorDiv.style.top = `${clientY + padding}px`;
       colorDiv.style.left = `${clientX + padding}px`;
 
@@ -83,17 +111,41 @@ export const EyeDropper = ({
       ).data;
       currentColor = rgbToHex(pixel[0], pixel[1], pixel[2]);
 
+      if (isHoldingPointerDown) {
+        for (const element of selectedElementsRef.current) {
+          // console.log({ element });
+          mutateElement(element, { backgroundColor: currentColor }, false);
+          invalidateShapeForElement(element);
+        }
+        Scene.getScene(selectedElementsRef.current[0])?.informMutation();
+      }
+
       colorDiv.style.background = currentColor;
     };
 
+    if (
+      window.__EXCALIDRAW_CLIENT_X__ != null &&
+      window.__EXCALIDRAW_CLIENT_Y__ != null
+    ) {
+      mouseMoveListener({
+        clientX: window.__EXCALIDRAW_CLIENT_X__,
+        clientY: window.__EXCALIDRAW_CLIENT_Y__,
+      });
+    }
+
     // listen on pointerdown event
     const pointerDownListener = (event: PointerEvent) => {
+      isHoldingPointerDown = true;
+
       event.stopImmediatePropagation();
       // to prevent switching focus from current element
-      event.preventDefault();
+      // event.preventDefault();
       setTimeout(() => {
         document.querySelector("input")?.focus();
       }, 500);
+    };
+    const pointerUpListener = (event: PointerEvent) => {
+      isHoldingPointerDown = false;
       onSelect(currentColor, event);
     };
     // const keyDownListener = (event: KeyboardEvent) => {
@@ -106,15 +158,18 @@ export const EyeDropper = ({
     // };
     // container.addEventListener("keydown", keyDownListener);
     container.addEventListener("pointerdown", pointerDownListener);
+    container.addEventListener("pointerup", pointerUpListener);
 
     document.addEventListener("mousemove", mouseMoveListener, {
       passive: true,
     });
 
     return () => {
+      isHoldingPointerDown = false;
       document.removeEventListener("mousemove", mouseMoveListener);
       // container.removeEventListener("keydown", keyDownListener);
       container.removeEventListener("pointerdown", pointerDownListener);
+      container.removeEventListener("pointerup", pointerUpListener);
     };
   }, [canvas, bodyRoot, onCancel, onSelect]);
 

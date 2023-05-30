@@ -131,10 +131,14 @@ export const Picker = ({
       <div
         ref={pickerRef}
         onKeyDown={(event) => {
+          if (event[KEYS.CTRL_OR_CMD]) {
+            return;
+          }
+
           event.preventDefault();
           event.stopPropagation();
 
-          if (event.key === KEYS.ALT) {
+          if (event.altKey) {
             onEyeDropperToggle(true);
             return;
           }
@@ -155,7 +159,7 @@ export const Picker = ({
           });
         }}
         onKeyUp={(event) => {
-          if (event.key === KEYS.ALT) {
+          if (event.altKey) {
             // onEyeDropperToggle(false);
             return;
           }
