@@ -19,7 +19,7 @@ import "./EyeDropper.scss";
 /** null indicates closed eyeDropper */
 export const eyeDropperStateAtom = atom<null | {
   keepOpen: boolean;
-  onSelect?: (color: string) => void;
+  onSelect?: (color: string, event: PointerEvent) => void;
 }>(null);
 
 const padding = 20;
@@ -99,7 +99,6 @@ export const EyeDropper = ({
       clientX: number;
       clientY: number;
     }) => {
-      console.log("MOVE");
       colorDiv.style.top = `${clientY + padding}px`;
       colorDiv.style.left = `${clientX + padding}px`;
 

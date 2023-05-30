@@ -363,7 +363,7 @@ const LayerUI = ({
           }}
           onSelect={(color, event) => {
             setEyeDropperState((s) => (s?.keepOpen && event.altKey ? s : null));
-            eyeDropperState?.onSelect?.(color);
+            eyeDropperState?.onSelect?.(color, event);
           }}
         />
       )}

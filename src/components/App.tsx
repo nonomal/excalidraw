@@ -304,6 +304,7 @@ import { jotaiStore } from "../jotai";
 import { activeConfirmDialogAtom } from "./ActiveConfirmDialog";
 import { actionWrapTextInContainer } from "../actions/actionBoundText";
 import BraveMeasureTextError from "./BraveMeasureTextError";
+import { eyeDropperStateAtom } from "./EyeDropper";
 
 const AppContext = React.createContext<AppClassProperties>(null!);
 const AppPropsContext = React.createContext<AppProps>(null!);
@@ -2349,6 +2350,24 @@ class App extends React.Component<AppProps, AppState> {
         (event.key === KEYS.BACKSPACE || event.key === KEYS.DELETE)
       ) {
         jotaiStore.set(activeConfirmDialogAtom, "clearCanvas");
+      }
+
+      if (event.key === KEYS.I) {
+        jotaiStore.set(eyeDropperStateAtom, {
+          onSelect: (color, event) => {
+            this.updateScene({
+              elements: this.scene.getElementsIncludingDeleted().map((el) => {
+                if (this.state.selectedElementIds[el.id]) {
+                  return newElementWith(el, {
+                    [event.altKey ? "strokeColor" : "backgroundColor"]: color,
+                  });
+                }
+                return el;
+              }),
+            });
+          },
+          keepOpen: false,
+        });
       }
     },
   );
